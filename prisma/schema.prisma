@@ -1,0 +1,56 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  name      String? // optional field (nullable)
+  age       Int?
+  bio       String?  @db.Text // maps to TEXT column
+  role      Role     @default(USER)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  // relation fields (not DB columns)
+  posts     Post[]
+  profile   Profile?
+
+  @@index([email]) // index for faster lookups
+  @@map("users") // maps to "users" table in DB
+}
+
+enum Role {
+  USER
+  ADMIN
+  MODERATOR
+}
+
+model Post {
+  id        String  @id @default(uuid())
+  title     String
+  content   String?
+  published Boolean @default(false)
+
+  authorId Int
+  author   User @relation(fields: [authorId], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+model Profile {
+  id     Int     @id @default(autoincrement())
+  bio    String
+  avatar String?
+  userId Int     @unique // ← @unique enforces one-to-one
+  user   User    @relation(fields: [userId], references: [id])
+}
+
+// Or use cuid() for collision-resistant IDs:
+model Comment {
+  id String @id @default(cuid())
+}
